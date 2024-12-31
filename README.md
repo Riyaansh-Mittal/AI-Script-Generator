@@ -3,6 +3,12 @@
 This project is a Django-based application that generates Scripts by leveraging X.AI's Grok-beta model. It accepts input through text prompts, external links, and uploaded files (PDF/TXT) to create comprehensive, well-structured scripts.
 
 ## Screenshots
+![Application Screenshot](images/Screenshot_37.jpg "Screenshot of Application")
+![Application Screenshot](images/Screenshot_38.jpg "Screenshot of Application")
+![Application Screenshot](images/Screenshot_39.jpg "Screenshot of Application")
+![Application Screenshot](images/Screenshot_40.jpg "Screenshot of Application")
+![Application Screenshot](images/Screenshot_41.jpg "Screenshot of Application")
+![Application Screenshot](images/Screenshot_41.jpg "Screenshot of Application")
 
 ## Features
 
