@@ -1,0 +1,6 @@
+django
+openai
+requests
+PyPDF2
+beautifulsoup4
+

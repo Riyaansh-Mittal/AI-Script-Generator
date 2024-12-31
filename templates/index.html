@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Script Generator</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .load {
+        width: 100px;
+        height: 100px;
+        margin: 110px auto 0;
+        border: solid 10px #0004ff;
+        border-radius: 50%;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        animation-name: rotate;
+        animation-duration: 1s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+      }
+    </style>
+  </head>
+
+  <body class="flex flex-col min-h-screen bg-gray-100 font-sans antialiased">
+    <!-- Navbar -->
+    <nav class="bg-blue-600 p-4 text-white flex justify-between">
+      <div>
+        <h1 class="text-3xl font-bold">AI Script Generator</h1>
+      </div>
+      <div>
+        <a href="/" class="text-white hover:underline mx-4"
+          >Welcome {{ user.username }}</a
+        >
+        <a href="/script-list" class="text-white hover:underline mx-4"
+          >Saved Scripts</a
+        >
+        <a href="/logout" class="text-white hover:underline">Logout</a>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="flex-grow container mx-auto mt-10 px-4 sm:px-0">
+      <div
+        class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md transition-transform transform hover:scale-105 flex flex-col"
+      >
+        <div class="text-center">
+          <h2 class="text-2xl font-semibold mb-4">
+            Welcome to the AI Script Generator
+          </h2>
+          <p class="text-gray-700">
+            Generate high-quality blog articles from various inputs like YouTube
+            videos, PDFs, text files, links, or your own prompt.
+          </p>
+        </div>
+
+        <br />
+
+        <!-- Prompt Input -->
+        <div>
+          <h2 class="text-xl mb-4 font-semibold">Enter Your Prompt</h2>
+          <textarea
+            id="promptInput"
+            class="w-full p-2 border border-blue-400 rounded-md"
+            placeholder="Write your prompt here..."
+          ></textarea>
+        </div>
+
+        <br />
+
+        <!-- File Upload Section -->
+        <div>
+          <h2 class="text-xl mb-4 font-semibold">Upload Files</h2>
+          <input
+            type="file"
+            id="fileInput"
+            class="flex-grow p-2 border border-blue-400 rounded-md"
+            accept=".pdf, .txt"
+          />
+          <p class="text-sm text-gray-600 mt-2">
+            You can upload PDFs or text files.
+          </p>
+        </div>
+
+        <br />
+
+        <!-- URL Input Section -->
+        <div>
+          <h2 class="text-xl mb-4 font-semibold">Enter External Link</h2>
+          <div class="flex space-x-4">
+            <input
+              id="externalLink"
+              type="url"
+              placeholder="Paste Link..."
+              class="flex-grow p-2 border border-blue-400 rounded-l-md"
+            />
+          </div>
+        </div>
+        <button
+          id="fetchLinkButton"
+          class="bg-blue-600 text-white px-8 mx-auto py-2 mt-2 max-w-sm rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Generate Script
+        </button>
+
+        <br />
+
+        <!-- Loading Circle -->
+        <div style="display: none" id="loading-circle" class="load"></div>
+
+        <!-- Generated Script Display Section -->
+        <section class="mt-10 flex-grow">
+          <h2 class="text-xl mb-4 font-semibold">Generated Blog Article</h2>
+          <div id="blogContent" class="mt-2 text-gray-700 space-y-4"></div>
+        </section>
+      </div>
+    </div>
+
+    <footer class="text-center p-4 text-black mt-6">
+      Powered by
+      <a href="https://github.com/Riyaansh-Mittal">Riyaansh</a>
+    </footer>
+
+    <script>
+      // Add formatResponse function here
+      function formatResponse(text) {
+        const lines = text.trim().split("\n");
+        let formattedLines = [];
+
+        // Regular expressions to identify bullet points, sub-bullet points, bold text, and headers
+        const bulletPointRegex = /^\* (.*)/;
+        const subBulletPointRegex = /^‣ (.*)/;
+        const boldTextRegex = /\*\*(.*?)\*\*/g;
+        const headerRegex = /^## (.*)/; // For markdown headers (## Heading)
+
+        lines.forEach((line) => {
+          // Handle markdown headers (## Heading)
+          if (headerRegex.test(line)) {
+            line = line.replace(headerRegex, "<h2>$1</h2>");
+          }
+          // Handle sections like 'Section 1: Title'
+          else if (/^(Section \d+: .*)/.test(line)) {
+            line = `<h3><strong>${line}</strong></h3>`;
+          }
+          // Handle bullet points (e.g., * Bullet: or ‣ Sub-Bullet:)
+          else if (bulletPointRegex.test(line)) {
+            line = line.replace(bulletPointRegex, (match, p1) => {
+              // Apply bold text formatting inside the bullet point
+              p1 = p1.replace(boldTextRegex, "<strong>$1</strong>");
+              return `<li>${p1}</li>`;
+            });
+          }
+          // Handle sub-bullet points
+          else if (subBulletPointRegex.test(line)) {
+            line = line.replace(subBulletPointRegex, (match, p1) => {
+              // Apply bold text formatting inside the sub-bullet point
+              p1 = p1.replace(boldTextRegex, "<strong>$1</strong>");
+              return `<ul><li>${p1}</li></ul>`;
+            });
+          }
+          // Convert bold text (e.g., **Bold Text**)
+          else {
+            line = line.replace(boldTextRegex, "<strong>$1</strong>");
+          }
+
+          // Replace tab spaces with non-breaking spaces
+          line = line.replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+          // Convert line breaks to <br /> for proper display in HTML
+          line = line.replace(/\n/g, "<br />");
+
+          formattedLines.push(line);
+        });
+
+        return formattedLines.join("<br />");
+      }
+
+      document
+        .getElementById("fetchLinkButton")
+        .addEventListener("click", async () => {
+          const promptInput = document.getElementById("promptInput").value;
+          const fileInput = document.getElementById("fileInput").files[0];
+          const externalLink = document.getElementById("externalLink").value;
+          const blogContent = document.getElementById("blogContent");
+          const formData = new FormData();
+
+          // Add prompt to form data if it exists
+          if (promptInput) {
+            formData.append("prompt", promptInput);
+          }
+
+          // Add file to form data if it exists
+          if (fileInput) {
+            formData.append("file", fileInput);
+          }
+
+          // Add external link to form data if it exists
+          if (externalLink) {
+            formData.append("link", externalLink);
+          }
+
+          // Ensure that at least one of the fields (prompt, file, or link) is provided
+          if (
+            formData.has("prompt") ||
+            formData.has("file") ||
+            formData.has("link")
+          ) {
+            document.getElementById("loading-circle").style.display = "block";
+            blogContent.innerHTML = ""; // Clear previous content
+
+            const endpointUrl = "/generate-script";
+
+            try {
+              const response = await fetch(endpointUrl, {
+                method: "POST",
+                body: formData,
+              });
+
+              const data = await response.json();
+
+              // Display the generated content or an error message
+              if (data.content) {
+                // Format the response using formatResponse function before displaying it
+                blogContent.innerHTML = formatResponse(data.content);
+              } else {
+                blogContent.innerHTML = "Failed to generate blog content.";
+              }
+            } catch (error) {
+              console.error("Error occurred:", error);
+              alert("Something went wrong. Please try again later.");
+            }
+
+            document.getElementById("loading-circle").style.display = "none";
+          } else {
+            alert("Please provide a prompt, upload a file, or enter a link.");
+          }
+        });
+    </script>
+  </body>
+</html>

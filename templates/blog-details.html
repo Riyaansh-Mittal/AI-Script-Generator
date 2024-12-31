@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Script Details</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-gray-100 font-sans antialiased">
+    <!-- Navbar -->
+    <nav class="bg-blue-600 p-4 text-white flex justify-between">
+      <div>
+        <h1 class="text-3xl font-bold">AI Script Generator</h1>
+      </div>
+      <div>
+        <a href="/" class="text-white hover:underline mx-4"
+          >Welcome {{ user.username }}</a
+        >
+        <a href="/script-list" class="text-white hover:underline mx-4"
+          >Saved Scripts</a
+        >
+        <a href="/logout" class="text-white hover:underline">Logout</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto mt-10 px-4 sm:px-0">
+      <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <section>
+          <h2 class="text-xl mb-4 font-semibold">Script Details</h2>
+          <div class="border border-gray-300 p-4 rounded-lg">
+            <!-- Blog content, formatted using dangerouslySetInnerHTML -->
+            <h3 class="text-lg font-semibold">Script Content</h3>
+            <p class="text-gray-700" id="blogContent"></p>
+
+            <!-- File name -->
+            {% if blog_article_detail.file_name %}
+            <hr class="my-4 border-gray-300" />
+            <h4 class="text-lg font-semibold">File Name</h4>
+            <p class="text-gray-700">{{ blog_article_detail.file_name }}</p>
+            {% endif %}
+
+            <!-- External link if exists -->
+            {% if blog_article_detail.external_link %}
+            <hr class="my-4 border-gray-300" />
+            <h4 class="text-lg font-semibold">External Link</h4>
+            <a
+              href="{{ blog_article_detail.external_link }}"
+              class="text-blue-600 hover:underline"
+              >{{ blog_article_detail.external_link }}</a
+            >
+            {% endif %}
+
+            <!-- External link name -->
+            {% if blog_article_detail.external_link_name %}
+            <hr class="my-4 border-gray-300" />
+            <h4 class="text-lg font-semibold">External Link Name</h4>
+            <p class="text-gray-700">
+              {{ blog_article_detail.external_link_name }}
+            </p>
+            {% endif %}
+
+            <!-- Created On -->
+            <hr class="my-4 border-gray-300" />
+            <h4 class="text-lg font-semibold">Created On</h4>
+            <p class="text-gray-700">{{ blog_article_detail.created_at }}</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <footer class="text-center p-4 text-black mt-6">
+      Powered by
+      <a href="https://github.com/Riyaansh-Mittal">Riyaansh</a>
+    </footer>
+
+    <!-- Script to handle formatting -->
+    <script>
+      function formatResponse(text) {
+        const lines = text.trim().split("\n");
+        let formattedLines = [];
+
+        // Regular expressions to identify bullet points, sub-bullet points, bold text, italic text, and headers
+        const bulletPointRegex = /^\* (.*)/;
+        const subBulletPointRegex = /^‣ (.*)/;
+        const boldTextRegex = /\*\*(.*?)\*\*/g;
+        const italicTextRegex = /\*(.*?)\*/g; // For *Italic Text*
+        const headerRegex = /^## (.*)/; // For markdown headers (## Heading)
+
+        lines.forEach((line) => {
+          // Handle markdown headers (## Heading)
+          if (headerRegex.test(line)) {
+            line = line.replace(headerRegex, "<h2>$1</h2>");
+          }
+          // Handle sections like 'Section 1: Title'
+          else if (/^(Section \d+: .*)/.test(line)) {
+            line = `<h3><strong>${line}</strong></h3>`;
+          }
+          // Handle bullet points (e.g., * Bullet: or ‣ Sub-Bullet:)
+          else if (bulletPointRegex.test(line)) {
+            line = line.replace(bulletPointRegex, (match, p1) => {
+              // Apply bold and italic text formatting inside the bullet point
+              p1 = p1.replace(boldTextRegex, "<strong>$1</strong>");
+              p1 = p1.replace(italicTextRegex, "<em>$1</em>");
+              return `<li>${p1}</li>`;
+            });
+          }
+          // Handle sub-bullet points
+          else if (subBulletPointRegex.test(line)) {
+            line = line.replace(subBulletPointRegex, (match, p1) => {
+              // Apply bold and italic text formatting inside the sub-bullet point
+              p1 = p1.replace(boldTextRegex, "<strong>$1</strong>");
+              p1 = p1.replace(italicTextRegex, "<em>$1</em>");
+              return `<ul><li>${p1}</li></ul>`;
+            });
+          }
+          // Convert bold and italic text in plain lines
+          else {
+            line = line.replace(boldTextRegex, "<strong>$1</strong>");
+            line = line.replace(italicTextRegex, "<em>$1</em>");
+          }
+
+          // Replace tab spaces with non-breaking spaces
+          line = line.replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+          // Convert line breaks to <br /> for proper display in HTML
+          line = line.replace(/\n/g, "<br />");
+
+          formattedLines.push(line);
+        });
+
+        return formattedLines.join("<br />");
+      }
+
+      // Assuming `blog_article_detail.generated_content` contains the text you want to format
+      const rawContent = `{{ blog_article_detail.generated_content }}`; // Replace with actual content from backend
+      const formattedContent = formatResponse(rawContent);
+
+      // Inject the formatted content into the HTML
+      document.getElementById("blogContent").innerHTML = formattedContent;
+    </script>
+  </body>
+</html>
